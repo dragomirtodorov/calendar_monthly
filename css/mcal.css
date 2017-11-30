@@ -27,6 +27,7 @@
 .calendar-day {
 	text-align: center;
 	width: 14.2%;
+        font-weight: bold;
 }
 
 .monthPrev {
@@ -34,7 +35,8 @@
 }
 
 .monthNext {
-	color: #444444;
+    color: #444444;
+    text-shadow: 1px 1px 0px white;
 }
 
 .square-content .today {
