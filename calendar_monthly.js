@@ -53,13 +53,14 @@ Module.register("calendar_monthly", {
     create_month_table: function(shift) {
         //         if ((moment() > this.midnight) || (!this.loaded)) {
 
-	var month = moment().add(shift, "month").month();
-	var year = moment().year();
-	var monthName = moment().add(shift, "month").format("MMMM");
-	var monthLength = moment().add(shift, "month").daysInMonth();
+        var current_month = moment().add(shift, "month");
+        var month = current_month.month();
+	var year = current_month.year();
+	var monthName = current_month.format("MMMM");
+	var monthLength = current_month.daysInMonth();
 
 	// Find first day of the month, LOCALE aware
-	var startingDay = moment().add(shift, "month").date(1).weekday();
+	var startingDay = current_month.date(1).weekday();
 
 	var wrapper = document.createElement("table");
 	wrapper.className = 'xsmall';
@@ -119,7 +120,7 @@ Module.register("calendar_monthly", {
 	for (var i = 0; i <= 6; i++ ){
 	    var bodyTD = document.createElement("td");
 	    bodyTD.className = "calendar-header-day";
-	    bodyTD.innerHTML = moment().add(shift, "month").weekday(i).format("ddd");
+	    bodyTD.innerHTML = current_month.weekday(i).format("ddd");
 	    bodyTR.appendChild(bodyTD);
 	}
 	bodyContent.appendChild(bodyTR);
@@ -149,7 +150,7 @@ Module.register("calendar_monthly", {
 		if (j < startingDay && i == 0) {
 		    // First row, fill in empty slots
 		    innerSpan.className = "monthPrev";
-		    innerSpan.innerHTML = moment().add(shift, "month").subtract(1, 'months').endOf('month').subtract((startingDay - 1) - j, 'days').date();
+		    innerSpan.innerHTML = current_month.subtract(1, 'months').endOf('month').subtract((startingDay - 1) - j, 'days').date();
 		} else if (day <= monthLength && (i > 0 || j >= startingDay)) {
 		    if (day == moment().date() && shift == 0) {
 			innerSpan.id = "day" + day;
@@ -194,7 +195,7 @@ Module.register("calendar_monthly", {
     // Override dom generator
     getDom: function() {
         var wrapper = document.createElement("div");
-  	for (var i = -1; i < 1; i++) {
+  	for (var i = 1; i < 2; i++) {
             var child =  this.create_month_table(i);
             wrapper.appendChild(child);
         }
