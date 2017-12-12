@@ -41,18 +41,19 @@ Module.register("calendar_monthly", {
 	Log.log("Starting module: " + this.name);
 	// Set locale
 	moment.locale(config.language);
-	
+	// Open socket communication
+        this.sendSocketNotification("hello");
 	// Calculate next midnight and add updateDelay
 	var now = moment();
 	this.midnight = moment([now.year(), now.month(), now.date() + 1]).add(this.config.updateDelay, "seconds");
 
 	this.loaded = false;
-
+        this.EventsList = [];
+        this.cnt = 0;
 	this.scheduleUpdate(this.config.initialLoadDelay * 1000);
     },
-    create_month_table: function(shift) {
-        //         if ((moment() > this.midnight) || (!this.loaded)) {
 
+    create_month_table: function(shift) {
         var current_month = moment().add(shift, "month");
         var month = current_month.month();
 	var year = current_month.year();
@@ -158,6 +159,15 @@ Module.register("calendar_monthly", {
 		    } else {
 			innerSpan.id = "day" + day;
 			innerSpan.className = "daily";
+                        var event_type = this.has_event(day, month);
+                        if(event_type > 0) {
+                            if(event_type === 1) {
+                                innerSpan.className = "event";
+                            }
+                            else if(event_type === 2) {
+                                innerSpan.className = "public_event";
+                            }
+                        }
 		    }
 		    innerSpan.innerHTML = day;
 		    day++;
@@ -187,30 +197,74 @@ Module.register("calendar_monthly", {
 	bodyContent.appendChild(bodyTR);
 	wrapper.appendChild(bodyContent);
 
-	this.loaded = true;
 	return wrapper;
 
         //		}
     },
     // Override dom generator
     getDom: function() {
-        var wrapper = document.createElement("div");
-  	for (var i = 1; i < 2; i++) {
+        var wrapper = document.createElement("div");                                                                                                
+  	for (var i = -1; i < 2; i++) {
             var child =  this.create_month_table(i);
             wrapper.appendChild(child);
         }
+        this.loaded = true;
         return wrapper;
     },
 
-    scheduleUpdate: function(delay) {
-	if (this.config.debugging) {
-	    Log.log("= = = = = = = = = = = = = = = = = = = = = = = = = = = = = =");
-	    Log.log("CALENDAR_MONTHLY IS IN DEBUG MODE!");
-	    Log.log("Remove 'debugging' option from config/config.js to disable.");
-	    Log.log("             Current moment(): " + moment() + " (" + moment().format("hh:mm:ss a") + ")");
-	    Log.log("scheduleUpdate() delay set at: " + delay);
+        // Override socket notification handler.
+    notificationReceived: function (notification, payload, sender) {
+	if (notification === "CALENDAR_EVENTS") {
+            if(typeof payload !== 'undefined' && payload !== null) {
+                
+                for(var i = 0; i < payload.length; i++) {
+                    //if(this.Events.List.indexOf(payload[i].startDate)) {
+                        this.EventsList.push(payload[i]);
+                    //}
+                    var start_date = parseInt(payload[i].startDate);
+                    //console.log(moment(start_date));
+                    var event_date = moment(start_date);
+                    var day = moment(start_date).date();
+                    var month = moment(start_date).month();
+                    //console.log(day + " "+ month + " "+ event_date.format("MMMM") + " " + moment().format("MMMM"));
+                }
+                //console.log("Getting events from my-calendar module!!!");
+            }
+	} else {
+	    Log.log("Calendar received an unknown socket notification: " + notification);
 	}
 
+        if(this.loaded) {
+            this.updateDom(this.config.fadeSpeed * 1000);
+        }
+	
+    },
+    // return 0 - not an event day
+    // return 1 - personal event
+    // return 2 - punlic event ie official holiday
+    has_event: function(today, month) {
+        //console.log("eventslist: "+ this.EventsList.length);
+        //console.dir(this.EventsList);
+        for(var i = 0 ; i < this.EventsList.length; i++) {
+            var start_date = parseInt(this.EventsList[i].startDate);
+            //console.log(start_date);
+            var event_date = moment(start_date);
+            var event_day = moment(start_date).date();                                                                                                                                                    
+            var event_month = moment(start_date).month();                                                                                                                                                 
+
+            if(today === event_day && month === event_month ) {
+                if(this.EventsList[i].class === "PUBLIC"){
+                    return 2;
+                }
+                return 1;
+            }
+        }
+        return 0;
+    },
+    
+
+    
+    scheduleUpdate: function(delay) {
 	if (typeof delay !== "undefined" && delay >= 0) {
 	    nextReload = delay;
 	}
@@ -218,16 +272,7 @@ Module.register("calendar_monthly", {
 	if (delay > 0) {
 	    // Calculate the time DIFFERENCE to that next reload!
 	    nextReload = moment.duration(nextReload.diff(moment(), "milliseconds"));
-	    if (this.config.debugging) {
-		var hours = Math.floor(nextReload.asHours());
-		var  mins = Math.floor(nextReload.asMinutes()) - hours * 60;
-		var  secs = Math.floor(nextReload.asSeconds()) - ((hours * 3600 ) + (mins * 60));
-		Log.log("  nextReload should happen at: " + delay + " (" + moment(delay).format("hh:mm:ss a") + ")");
-		Log.log("                  which is in: " + mins + " minutes and " + secs + " seconds.");
-		Log.log("              midnight set at: " + this.midnight + " (" + moment(this.midnight).format("hh:mm:ss a") + ")");
-		Log.log("= = = = = = = = = = = = = = = = = = = = = = = = = = = = = =");
-	    }
-	}
+ 	}
 
 	var self = this;
 	setTimeout(function() {
@@ -237,10 +282,6 @@ Module.register("calendar_monthly", {
     },
 
     reloadDom: function() {
-	if (this.config.debugging) {
-	    Log.log("          Calling reloadDom()!");
-	}
-
 	var now = moment();
 	if (now > this.midnight) {
 	    this.updateDom(this.config.fadeSpeed * 1000);
@@ -249,6 +290,7 @@ Module.register("calendar_monthly", {
 
 	var nextRefresh = moment([now.year(), now.month(), now.date(), now.hour() + 1]);
 	this.scheduleUpdate(nextRefresh);
-    }
+    },
+
 
 });

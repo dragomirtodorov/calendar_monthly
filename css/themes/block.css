@@ -27,6 +27,15 @@
 	font-weight: bold;
 	color: #333333;
 }
+.square-content .event {
+    font-weight: bold;
+    color: blue;
+}
+
+.square-content .public_event {
+    font-weight: bold;
+    color: red;
+}
 
 .square-content div {
 	display: table;
