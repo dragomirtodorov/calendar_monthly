@@ -212,15 +212,23 @@ Module.register("calendar_monthly", {
         return wrapper;
     },
 
-        // Override socket notification handler.
+    
+    // Override socket notification handler.
     notificationReceived: function (notification, payload, sender) {
 	if (notification === "CALENDAR_EVENTS") {
             if(typeof payload !== 'undefined' && payload !== null) {
-                
                 for(var i = 0; i < payload.length; i++) {
-                    //if(this.Events.List.indexOf(payload[i].startDate)) {
+                    var dublicate = false;
+                    for(var j = 0; j < this.EventsList.length; j++) {
+                        if(this.EventsList[j].title === payload[i].title) {
+                            this.EventsList[j] = payload[i];
+                            dublicate = true;
+                        }
+                    }
+                    if(!dublicate) {
                         this.EventsList.push(payload[i]);
-                    //}
+                    }
+
                     var start_date = parseInt(payload[i].startDate);
                     //console.log(moment(start_date));
                     var event_date = moment(start_date);
@@ -228,7 +236,7 @@ Module.register("calendar_monthly", {
                     var month = moment(start_date).month();
                     //console.log(day + " "+ month + " "+ event_date.format("MMMM") + " " + moment().format("MMMM"));
                 }
-                //console.log("Getting events from my-calendar module!!!");
+                console.log("Getting events from my-calendar module " + this.EventsList.length);
             }
 	} else {
 	    Log.log("Calendar received an unknown socket notification: " + notification);
