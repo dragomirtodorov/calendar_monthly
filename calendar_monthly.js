@@ -55,6 +55,7 @@ Module.register("calendar_monthly", {
 
     create_month_table: function(shift) {
         var current_month = moment().add(shift, "month");
+        var prev_month = moment().add(shift-1, "month");
         var month = current_month.month();
 	var year = current_month.year();
 	var monthName = current_month.format("MMMM");
@@ -151,7 +152,9 @@ Module.register("calendar_monthly", {
 		if (j < startingDay && i == 0) {
 		    // First row, fill in empty slots
 		    innerSpan.className = "monthPrev";
-		    innerSpan.innerHTML = current_month.subtract(1, 'months').endOf('month').subtract((startingDay - 1) - j, 'days').date();
+                    var prev_month_day = prev_month.endOf('month').subtract((startingDay - 1) - j, 'days').date();
+		    innerSpan.innerHTML = prev_month_day;
+                    console.log("DRAGO "+ j + " " + prev_month_day + " " + startingDay + " " + current_month);
 		} else if (day <= monthLength && (i > 0 || j >= startingDay)) {
 		    if (day == moment().date() && shift == 0) {
 			innerSpan.id = "day" + day;
