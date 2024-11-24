@@ -1,20 +1,31 @@
-/* Magic Mirror
- * Node Helper: Calendar
- *
- * By Michael Teeuw http://michaelteeuw.nl
- * MIT Licensed.
- */
-
-var NodeHelper = require("node_helper");
-var validUrl = require("valid-url");
+// node_helper.js
+const NodeHelper = require("node_helper");
+const moment = require("moment");
 
 module.exports = NodeHelper.create({
-    // Override start method.
     start: function() {
-	var events = [];
-
-	console.log("Starting node helper for: " + this.name);
-        console.log("Drgomir Todorov");
+        console.log("Starting node_helper for calendar_monthly");
     },
-    
+
+    socketNotificationReceived: function(notification, payload) {
+        if (notification === "hello") {
+            // Fetch or generate calendar events here
+            // For demonstration, sending dummy events after 2 seconds
+            setTimeout(() => {
+                const events = [
+                    {
+                        title: "Public Holiday",
+                        startDate: moment().startOf('month').add(5, 'days').valueOf(),
+                        class: "PUBLIC"
+                    },
+                    {
+                        title: "Personal Event",
+                        startDate: moment().startOf('month').add(10, 'days').valueOf(),
+                        class: "PERSONAL"
+                    }
+                ];
+                this.sendSocketNotification("CALENDAR_EVENTS", events);
+            }, 2000);
+        }
+    }
 });
